@@ -277,6 +277,13 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
                              llvmpipe->viewports);
    }
 
+   if (llvmpipe->dirty & LP_NEW_SSBO)
+   {
+      lp_setup_set_ssbo(llvmpipe->setup,
+                        PIPE_MAX_SHADER_BUFFERS,
+                        &llvmpipe->buffers[PIPE_SHADER_FRAGMENT][0]);
+   }
+
    llvmpipe->dirty = 0;
 }
 

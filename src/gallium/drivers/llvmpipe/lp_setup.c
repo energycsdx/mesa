@@ -964,6 +964,27 @@ lp_setup_set_fragment_sampler_state(struct lp_setup_context *setup,
    setup->dirty |= LP_SETUP_NEW_FS;
 }
 
+void lp_setup_set_ssbo(struct lp_setup_context *setup,
+                       unsigned num,
+                       struct pipe_shader_buffer *buffers)
+{
+   unsigned i;
+
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+
+   assert(num <= PIPE_MAX_SHADER_BUFFERS);
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      const struct pipe_shader_buffer *buffer = i < num ? &buffers[i] : NULL;
+
+      if (buffer && buffer->buffer)
+      {
+         struct llvmpipe_resource *resource = llvmpipe_resource(buffer->buffer);
+         setup->fs.current.jit_context.buffers[i] = resource->data;
+      }
+   }
+}
+
 
 /**
  * Is the given texture referenced by any scene?

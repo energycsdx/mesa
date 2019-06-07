@@ -52,6 +52,7 @@
 
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_parse.h"
 
 #include "util/u_math.h"
 #include "util/u_pointer.h"
@@ -234,6 +235,7 @@ create_jit_context_type(struct gallivm_state *gallivm,
                                  PIPE_MAX_SHADER_SAMPLER_VIEWS); /* textures */
    elem_types[5] = LLVMArrayType(sampler_type,
                                  PIPE_MAX_SAMPLERS); /* samplers */
+   elem_types[6] = LLVMArrayType(LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0), PIPE_MAX_SHADER_BUFFERS); /* buffers */
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           ARRAY_SIZE(elem_types), 0);
 
@@ -252,6 +254,9 @@ create_jit_context_type(struct gallivm_state *gallivm,
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, samplers,
                           target, context_type,
                           DRAW_JIT_CTX_SAMPLERS);
+   LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, buffers,
+                          target, context_type,
+                          DRAW_JIT_CTX_BUFFERS);
    LP_CHECK_STRUCT_SIZE(struct draw_jit_context,
                         target, context_type);
 
@@ -597,6 +602,41 @@ draw_llvm_create_variant(struct draw_llvm *llvm,
    return variant;
 }
 
+static void
+draw_llvm_emit_load(struct lp_build_tgsi_context *bld_base,
+                    const struct tgsi_full_instruction *inst,
+                    LLVMValueRef context_ptr, LLVMValueRef outputs[4])
+{
+   struct lp_build_context *base = &bld_base->base;
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
+   struct gallivm_state *gallivm = base->gallivm;
+   struct lp_type elem_type = lp_elem_type(base->type);
+
+   LLVMValueRef indices[3];
+   LLVMValueRef member;
+
+   indices[0] = lp_build_const_int32(gallivm, 0);
+   indices[1] = lp_build_const_int32(gallivm, DRAW_JIT_CTX_BUFFERS);
+   indices[2] = lp_build_const_int32(gallivm, inst->Src[0].Register.Index);
+   member =
+      LLVMBuildGEP(gallivm->builder, context_ptr, indices,
+                   ARRAY_SIZE(indices), "");
+   member = LLVMBuildLoad(gallivm->builder, member, "");
+
+   unsigned chan_index, chan_count = 0;
+
+   TGSI_FOR_EACH_DST0_ENABLED_CHANNEL(inst, chan_index) {
+      LLVMValueRef offset = lp_build_const_int32(gallivm, 4 * chan_count++);
+
+      outputs[chan_index] =
+         lp_build_gather(gallivm, base->type.length, uint_bld->type.width, elem_type, true,
+                         LLVMBuildGEP(gallivm->builder, member, &offset, 1,
+                                      ""), lp_build_emit_fetch(bld_base, inst,
+                                                               1, chan_index),
+                         true);
+   }
+}
+
 
 static void
 generate_vs(struct draw_llvm_variant *variant,
@@ -616,6 +656,9 @@ generate_vs(struct draw_llvm_variant *variant,
    LLVMValueRef num_consts_ptr =
       draw_jit_context_num_vs_constants(variant->gallivm, context_ptr);
 
+   struct lp_build_load_store_iface load_store_iface;
+   load_store_iface.emit_load = draw_llvm_emit_load;
+
    lp_build_tgsi_soa(variant->gallivm,
                      tokens,
                      vs_type,
@@ -629,7 +672,7 @@ generate_vs(struct draw_llvm_variant *variant,
                      NULL,
                      draw_sampler,
                      &llvm->draw->vs.vertex_shader->info,
-                     NULL);
+                     NULL, &load_store_iface);
 
    {
       LLVMValueRef out;
@@ -2114,6 +2157,16 @@ draw_llvm_set_mapped_texture(struct draw_context *draw,
    }
 }
 
+void
+draw_llvm_set_buffer(struct draw_context *draw,
+                     enum pipe_shader_type shader_stage,
+                     unsigned idx,
+                     void *buffer)
+{
+   void **llvm_buffers = draw->llvm->jit_context.buffers;
+
+   llvm_buffers[idx] = buffer;
+}
 
 void
 draw_llvm_set_sampler_state(struct draw_context *draw, 
@@ -2356,7 +2409,8 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
                      NULL,
                      sampler,
                      &llvm->draw->gs.geometry_shader->info,
-                     (const struct lp_build_tgsi_gs_iface *)&gs_iface);
+                     (const struct lp_build_tgsi_gs_iface *)&gs_iface,
+                     NULL);
 
    sampler->destroy(sampler);
 

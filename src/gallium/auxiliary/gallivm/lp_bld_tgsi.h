@@ -67,6 +67,7 @@ struct lp_build_mask_context;
 struct gallivm_state;
 struct lp_derivatives;
 struct lp_build_tgsi_gs_iface;
+struct lp_build_load_store_iface;
 
 
 enum lp_build_tex_modifier {
@@ -230,7 +231,8 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
                   LLVMValueRef thread_data_ptr,
                   const struct lp_build_sampler_soa *sampler,
                   const struct tgsi_shader_info *info,
-                  const struct lp_build_tgsi_gs_iface *gs_iface);
+                  const struct lp_build_tgsi_gs_iface *gs_iface,
+                  const struct lp_build_load_store_iface *load_store_iface);
 
 
 enum lp_exec_mask_break_type {
@@ -418,6 +420,14 @@ struct lp_build_tgsi_gs_iface
                        LLVMValueRef emitted_prims_vec);
 };
 
+struct lp_build_load_store_iface
+{
+   void (*emit_load)(struct lp_build_tgsi_context * bld_base,
+                     const struct tgsi_full_instruction * inst,
+                     LLVMValueRef context_ptr,
+                     LLVMValueRef outputs[4]);
+};
+
 struct lp_build_tgsi_soa_context
 {
    struct lp_build_tgsi_context bld_base;
@@ -426,6 +436,7 @@ struct lp_build_tgsi_soa_context
    struct lp_build_context elem_bld;
 
    const struct lp_build_tgsi_gs_iface *gs_iface;
+   const struct lp_build_load_store_iface *load_store_iface;
    LLVMValueRef emitted_prims_vec_ptr;
    LLVMValueRef total_emitted_vertices_vec_ptr;
    LLVMValueRef emitted_vertices_vec_ptr;

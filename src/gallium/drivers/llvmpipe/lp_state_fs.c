@@ -76,6 +76,7 @@
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_conv.h"
+#include "gallivm/lp_bld_gather.h"
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_logic.h"
@@ -287,6 +288,41 @@ lp_build_depth_clamp(struct gallivm_state *gallivm,
 }
 
 
+static void
+lp_emit_load(struct lp_build_tgsi_context *bld_base,
+             const struct tgsi_full_instruction *inst,
+             LLVMValueRef context_ptr, LLVMValueRef outputs[4])
+{
+   struct lp_build_context *base = &bld_base->base;
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
+   struct gallivm_state *gallivm = base->gallivm;
+   struct lp_type elem_type = lp_elem_type(base->type);
+
+   LLVMValueRef indices[3];
+   LLVMValueRef member;
+
+   indices[0] = lp_build_const_int32(gallivm, 0);
+   indices[1] = lp_build_const_int32(gallivm, LP_JIT_CTX_BUFFERS);
+   indices[2] = lp_build_const_int32(gallivm, inst->Src[0].Register.Index);
+   member =
+      LLVMBuildGEP(gallivm->builder, context_ptr, indices,
+                   ARRAY_SIZE(indices), "");
+   member = LLVMBuildLoad(gallivm->builder, member, "");
+
+   unsigned chan_index, chan_count = 0;
+
+   TGSI_FOR_EACH_DST0_ENABLED_CHANNEL(inst, chan_index) {
+      LLVMValueRef offset = lp_build_const_int32(gallivm, 4 * chan_count++);
+
+      outputs[chan_index] =
+         lp_build_gather(gallivm, base->type.length, uint_bld->type.width, elem_type, true,
+                         LLVMBuildGEP(gallivm->builder, member, &offset, 1,
+                                      ""), lp_build_emit_fetch(bld_base, inst,
+                                                               1, chan_index),
+                         true);
+   }
+}
+
 /**
  * Generate the fragment shader, depth/stencil test, and alpha tests.
  */
@@ -474,12 +510,15 @@ generate_fs_loop(struct gallivm_state *gallivm,
 
    lp_build_interp_soa_update_inputs_dyn(interp, gallivm, loop_state.counter);
 
+   struct lp_build_load_store_iface load_store_iface;
+   load_store_iface.emit_load = lp_emit_load;
+
    /* Build the actual shader */
    lp_build_tgsi_soa(gallivm, tokens, type, &mask,
                      consts_ptr, num_consts_ptr, &system_values,
                      interp->inputs,
                      outputs, context_ptr, thread_data_ptr,
-                     sampler, &shader->info.base, NULL);
+                     sampler, &shader->info.base, NULL, &load_store_iface);
 
    /* Alpha test */
    if (key->alpha.enabled) {

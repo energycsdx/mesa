@@ -135,6 +135,11 @@ lp_setup_set_fragment_sampler_state(struct lp_setup_context *setup,
                                     unsigned num,
                                     struct pipe_sampler_state **samplers);
 
+void
+lp_setup_set_ssbo(struct lp_setup_context *setup,
+                  unsigned num,
+                  struct pipe_shader_buffer *buffers);
+
 unsigned
 lp_setup_is_resource_referenced( const struct lp_setup_context *setup,
                                 const struct pipe_resource *texture );

@@ -3356,6 +3356,19 @@ lod_emit(
                FALSE, LP_SAMPLER_OP_LODQ, emit_data->output);
 }
 
+static void
+load_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   bld->load_store_iface->emit_load(bld_base, emit_data->inst, bld->context_ptr,
+                                    emit_data->output);
+
+}
+
 static LLVMValueRef
 mask_vec(struct lp_build_tgsi_context *bld_base)
 {
@@ -3838,7 +3851,8 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
                   LLVMValueRef thread_data_ptr,
                   const struct lp_build_sampler_soa *sampler,
                   const struct tgsi_shader_info *info,
-                  const struct lp_build_tgsi_gs_iface *gs_iface)
+                  const struct lp_build_tgsi_gs_iface *gs_iface,
+                  const struct lp_build_load_store_iface *load_store_iface)
 {
    struct lp_build_tgsi_soa_context bld;
 
@@ -3994,13 +4008,19 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
                                 max_output_vertices);
    }
 
+   if (load_store_iface)
+   {
+      bld.load_store_iface = load_store_iface;
+      bld.bld_base.op_actions[TGSI_OPCODE_LOAD].emit = load_emit;
+   }
+
    lp_exec_mask_init(&bld.exec_mask, &bld.bld_base.int_bld);
 
    bld.system_values = *system_values;
 
    lp_build_tgsi_llvm(&bld.bld_base, tokens);
 
-   if (0) {
+   if (1) {
       LLVMBasicBlockRef block = LLVMGetInsertBlock(gallivm->builder);
       LLVMValueRef function = LLVMGetBasicBlockParent(block);
       debug_printf("11111111111111111111111111111 \n");

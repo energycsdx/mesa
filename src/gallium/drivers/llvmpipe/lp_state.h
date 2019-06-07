@@ -56,6 +56,7 @@
 #define LP_NEW_GS            0x10000
 #define LP_NEW_SO            0x20000
 #define LP_NEW_SO_BUFFERS    0x40000
+#define LP_NEW_SSBO          0x80000
 
 
 
@@ -125,6 +126,9 @@ llvmpipe_init_rasterizer_funcs(struct llvmpipe_context *llvmpipe);
 
 void
 llvmpipe_init_so_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_image_funcs(struct llvmpipe_context *llvmpipe);
 
 void
 llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *ctx,

@@ -188,6 +188,11 @@ draw_set_mapped_texture(struct draw_context *draw,
                         uint32_t mip_offsets[PIPE_MAX_TEXTURE_LEVELS]);
 
 
+void draw_set_buffer(struct draw_context *draw,
+                     enum pipe_shader_type shader_stage,
+                     unsigned idx,
+                     void *buffers);
+
 /*
  * Vertex shader functions
  */

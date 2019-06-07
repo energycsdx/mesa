@@ -1120,7 +1120,7 @@ tgsi_exec_machine_bind_shader(
    uint maxInstructions = 10, numInstructions = 0;
    uint maxDeclarations = 10, numDeclarations = 0;
 
-#if 0
+#if 1
    tgsi_dump(tokens, 0);
 #endif
 

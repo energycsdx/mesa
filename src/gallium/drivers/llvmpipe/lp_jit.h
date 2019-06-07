@@ -135,6 +135,7 @@ struct lp_jit_context
 
    struct lp_jit_texture textures[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    struct lp_jit_sampler samplers[PIPE_MAX_SAMPLERS];
+   void *buffers[PIPE_MAX_SHADER_BUFFERS];
 };
 
 
@@ -153,6 +154,7 @@ enum {
    LP_JIT_CTX_VIEWPORTS,
    LP_JIT_CTX_TEXTURES,
    LP_JIT_CTX_SAMPLERS,
+   LP_JIT_CTX_BUFFERS,
    LP_JIT_CTX_COUNT
 };
 

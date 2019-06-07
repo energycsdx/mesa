@@ -75,6 +75,7 @@ files_llvmpipe = files(
   'lp_state_fs.h',
   'lp_state_gs.c',
   'lp_state.h',
+  'lp_state_image.c',
   'lp_state_rasterizer.c',
   'lp_state_sampler.c',
   'lp_state_setup.c',

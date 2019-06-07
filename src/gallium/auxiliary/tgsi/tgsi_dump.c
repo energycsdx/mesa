@@ -743,6 +743,9 @@ init_dump_ctx(struct dump_ctx *ctx, uint flags)
 void
 tgsi_dump_to_file(const struct tgsi_token *tokens, uint flags, FILE *file)
 {
+   if (!tokens)
+      return;
+
    struct dump_ctx ctx;
    memset(&ctx, 0, sizeof(ctx));
 

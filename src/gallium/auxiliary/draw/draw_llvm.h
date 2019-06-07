@@ -128,6 +128,7 @@ struct draw_jit_context
 
    struct draw_jit_texture textures[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    struct draw_jit_sampler samplers[PIPE_MAX_SAMPLERS];
+   void *buffers[PIPE_MAX_SHADER_BUFFERS];
 };
 
 enum {
@@ -137,6 +138,7 @@ enum {
    DRAW_JIT_CTX_VIEWPORT             = 3,
    DRAW_JIT_CTX_TEXTURES             = 4,
    DRAW_JIT_CTX_SAMPLERS             = 5,
+   DRAW_JIT_CTX_BUFFERS              = 6,
    DRAW_JIT_CTX_NUM_FIELDS
 };
 
@@ -521,5 +523,11 @@ draw_llvm_set_mapped_texture(struct draw_context *draw,
                              uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS],
                              uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS],
                              uint32_t mip_offsets[PIPE_MAX_TEXTURE_LEVELS]);
+
+void
+draw_llvm_set_buffer(struct draw_context *draw,
+                     enum pipe_shader_type shader_stage,
+                     unsigned idx,
+                     void *buffers);
 
 #endif
