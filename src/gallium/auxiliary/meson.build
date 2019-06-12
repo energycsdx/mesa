@@ -421,7 +421,6 @@ if with_llvm
     'gallivm/lp_bld_swizzle.h',
     'gallivm/lp_bld_tgsi_action.c',
     'gallivm/lp_bld_tgsi_action.h',
-    'gallivm/lp_bld_tgsi_aos.c',
     'gallivm/lp_bld_tgsi.c',
     'gallivm/lp_bld_tgsi.h',
     'gallivm/lp_bld_tgsi_info.c',

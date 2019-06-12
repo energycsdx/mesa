@@ -233,18 +233,6 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
                   const struct lp_build_tgsi_gs_iface *gs_iface);
 
 
-void
-lp_build_tgsi_aos(struct gallivm_state *gallivm,
-                  const struct tgsi_token *tokens,
-                  struct lp_type type,
-                  const unsigned char swizzles[4],
-                  LLVMValueRef consts_ptr,
-                  const LLVMValueRef *inputs,
-                  LLVMValueRef *outputs,
-                  const struct lp_build_sampler_aos *sampler,
-                  const struct tgsi_shader_info *info);
-
-
 enum lp_exec_mask_break_type {
    LP_EXEC_MASK_BREAK_TYPE_LOOP,
    LP_EXEC_MASK_BREAK_TYPE_SWITCH
@@ -575,26 +563,6 @@ lp_aos_context(struct lp_build_tgsi_context *bld_base)
 {
    return (struct lp_build_tgsi_aos_context *)bld_base;
 }
-
-void
-lp_emit_declaration_aos(
-   struct lp_build_tgsi_aos_context *bld,
-   const struct tgsi_full_declaration *decl);
-
-
-boolean
-lp_emit_instruction_aos(
-   struct lp_build_tgsi_aos_context *bld,
-   const struct tgsi_full_instruction *inst,
-   const struct tgsi_opcode_info *info,
-   int *pc);
-
-void
-lp_emit_store_aos(
-   struct lp_build_tgsi_aos_context *bld,
-   const struct tgsi_full_instruction *inst,
-   unsigned index,
-   LLVMValueRef value);
 
 void lp_build_fetch_args(
    struct lp_build_tgsi_context * bld_base,
